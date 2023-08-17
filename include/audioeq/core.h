@@ -6,6 +6,8 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <variant>
+#include <list>
 
 #include "objects.h"
 #include "err.h"
@@ -14,10 +16,20 @@
 namespace aeq {
 
 class Core {
-	struct RegistryWrapper {
+	struct LinkInfo {
+		ID_Ptr<Port> i_port;
+		ID_Ptr<Port> o_port;
+	};
+
+	struct RegistryObjects {
 		mutable std::mutex mutex;
+
 		std::unordered_map<uint32_t, std::unique_ptr<Node>> nodes;
 		std::unordered_map<uint32_t, std::unique_ptr<Port>> ports;
+		std::unordered_map<uint32_t, LinkInfo> links;
+
+		std::unordered_map<uint32_t, std::list<Port *>>   nodeless_ports;
+		std::unordered_map<uint32_t, std::list<LinkInfo>> portless_links;
 	};
 
 	template<typename T> struct T_deleter {
@@ -29,7 +41,6 @@ class Core {
 	struct RegistryEventUserData {
 		Core *self;
 	};
-
 public:
 	Core(int &argc, char **&argv);
 	~Core();
@@ -43,6 +54,14 @@ public:
 private:
 	void setup_registry_events() noexcept;
 
+	void wrap_node(uint32_t id, const spa_dict *props);
+	void wrap_port(uint32_t id, const spa_dict *props);
+	void wrap_link(uint32_t id, const spa_dict *props);
+
+	bool try_unwrap_node(uint32_t id);
+	bool try_unwrap_port(uint32_t id);
+	bool try_unwrap_link(uint32_t id);
+
 	utils::Defer<void (*)()> deferred_deinit;
 	PW_UniquePtr<pw_thread_loop> loop;
 	PW_UniquePtr<pw_context> context;
@@ -52,7 +71,7 @@ private:
 	RegistryEventUserData reud;
 	spa_hook registry_listener;
 
-	RegistryWrapper registry_objects;
+	RegistryObjects registry_objects;
 
 	static void on_global(void *data, uint32_t id,
 			uint32_t permissions,
