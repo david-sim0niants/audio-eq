@@ -7,8 +7,9 @@ int main(int argc, char *argv[])
 {
 	aeq::Core core {argc, argv};
 
-	while (true) {
-	}
+	sleep(1);
+
+	core.lock_loop();
 
 	std::vector<aeq::Node *> nodes;
 	core.list_nodes(nodes);
@@ -25,12 +26,17 @@ int main(int argc, char *argv[])
 		}
 
 		std::cout << "Output ports:" << std::endl;
-		nr_ports = node->get_nr_i_ports();
+		nr_ports = node->get_nr_o_ports();
 		for (size_t i = 0; i < nr_ports; ++i) {
 			auto& port = node->get_o_port(i);
 			std::cout << "\t" << port.get_id() << ": " << port.get_name() << std::endl;
 		}
 	}
+
+	auto source_node = *std::find_if(nodes.begin(), nodes.end(), [](aeq::Node *node) { return node->get_id() == 39; });
+	auto sink_node = *std::find_if(nodes.begin(), nodes.end(), [](aeq::Node *node) { return node->get_id() == 52; });
+
+	core.unlock_loop();
 
 	return 0;
 }

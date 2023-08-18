@@ -4,10 +4,7 @@
 
 #include <vector>
 #include <memory>
-#include <mutex>
 #include <unordered_map>
-#include <variant>
-#include <list>
 
 #include "objects.h"
 #include "err.h"
@@ -15,6 +12,10 @@
 
 namespace aeq {
 
+/* Abstraction over pipewire core, context and thread loop objects.
+ * Deals with collecting and providing necessary pipewire objects,
+ * as well as creating and deleting new ones.
+ * This class is not intended to be movable/copiable. */
 class Core {
 	struct LinkInfo {
 		ID_Ptr<Port> i_port;
@@ -22,14 +23,13 @@ class Core {
 	};
 
 	struct RegistryObjects {
-		mutable std::mutex mutex;
-
 		std::unordered_map<uint32_t, std::unique_ptr<Node>> nodes;
 		std::unordered_map<uint32_t, std::unique_ptr<Port>> ports;
+
 		std::unordered_map<uint32_t, LinkInfo> links;
 
-		std::unordered_map<uint32_t, std::list<Port *>>   nodeless_ports;
-		std::unordered_map<uint32_t, std::list<LinkInfo>> portless_links;
+		std::unordered_map<uint32_t, std::vector<Port *>>   nodeless_ports;
+		std::unordered_map<uint32_t, std::vector<LinkInfo>> portless_links;
 	};
 
 	template<typename T> struct T_deleter {
@@ -50,7 +50,18 @@ public:
 	Core(Core&&) = delete;
 	Core& operator=(Core&&) = delete;
 
+	/* Lock the thread loop. */
+	void lock_loop() const;
+	/* Unlock the thread loop. */
+	void unlock_loop() const;
+
+	/* List all currently available nodes. */
 	void list_nodes(std::vector<Node *>& nodes) const;
+
+	/* Link two ports. Returns a link id. */
+	uint32_t link_ports(Port& o_port, Port& i_port);
+	/* Unlink two ports given the link id. */
+	void unlink_ports(uint32_t link_id);
 private:
 	void setup_registry_events() noexcept;
 
