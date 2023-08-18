@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "objects.h"
+#include "filter.h"
 #include "err.h"
 #include "utils/defer.h"
 
@@ -62,6 +63,8 @@ public:
 	uint32_t link_ports(Port& o_port, Port& i_port);
 	/* Unlink two ports given the link id. */
 	void unlink_ports(uint32_t link_id);
+
+	std::unique_ptr<Filter> create_filter(const char *name);
 private:
 	void setup_registry_events() noexcept;
 

@@ -1,6 +1,11 @@
 #include <audioeq/audioeq.h>
+#include <audioeq/filters/low_pass.h>
 
 #include <iostream>
+
+constexpr float cutoff_freq = 2000;
+constexpr int sample_rate = 44100;
+constexpr int nr_channels = 2;
 
 
 int main(int argc, char *argv[])
@@ -33,10 +38,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	auto source_node = *std::find_if(nodes.begin(), nodes.end(), [](aeq::Node *node) { return node->get_id() == 39; });
-	auto sink_node = *std::find_if(nodes.begin(), nodes.end(), [](aeq::Node *node) { return node->get_id() == 52; });
+	std::unique_ptr<aeq::filters::LowPassFilter> low_pass_filter =
+		std::make_unique<aeq::filters::LowPassFilter>(
+				std::move(*core.create_filter("audio-dsp").release()), cutoff_freq, sample_rate, nr_channels);
 
 	core.unlock_loop();
+
+	while (true) {
+	}
 
 	return 0;
 }

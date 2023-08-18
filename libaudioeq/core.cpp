@@ -89,6 +89,45 @@ void Core::list_nodes(std::vector<Node *>& nodes) const
 }
 
 
+uint32_t Core::link_ports(Port& o_port, Port& i_port)
+{
+	if (o_port.get_direction() != PortDirection::Output || i_port.get_direction() != PortDirection::Input)
+		throw CoreErr(AudioEqErr("Error: wrong port given."));
+
+	pw_properties *props = pw_properties_new(nullptr, nullptr);
+	pw_properties_setf(props, PW_KEY_LINK_OUTPUT_PORT, "%d", o_port.get_id());
+	pw_properties_setf(props, PW_KEY_LINK_INPUT_PORT, "%d", i_port.get_id());
+	pw_proxy *link = static_cast<pw_proxy *>(
+			pw_core_create_object(core.get(),
+				"link-factory",
+				PW_TYPE_INTERFACE_Link,
+				PW_VERSION_LINK,
+				&props->dict, 0));
+	pw_properties_free(props);
+	return pw_proxy_get_id(link);
+}
+
+
+void Core::unlink_ports(uint32_t link_id)
+{
+	pw_proxy *link = static_cast<pw_proxy *>(pw_core_find_proxy(core.get(), link_id));
+	pw_proxy_destroy(link);
+}
+
+
+std::unique_ptr<Filter> Core::create_filter(const char *name)
+{
+	pw_properties *props = pw_properties_new(
+		PW_KEY_MEDIA_TYPE, "Audio",
+		PW_KEY_MEDIA_CATEGORY, "Filter",
+		PW_KEY_MEDIA_ROLE, "DSP",
+		NULL);
+	pw_filter *filter = pw_filter_new(core.get(), name, props);
+	pw_properties_free(props);
+	return std::unique_ptr<Filter>(new Filter(filter));
+}
+
+
 void Core::setup_registry_events() noexcept
 {
 	reud.self = this;
