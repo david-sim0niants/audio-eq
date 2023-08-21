@@ -3,15 +3,17 @@
 
 namespace aeq {
 
-Filter::Filter(pw_filter *filter) : filter(filter)
+Filter::~Filter()
 {
-	setup_filter_events();
+	if (filter)
+		pw_filter_destroy(filter);
 }
 
 
-Filter::~Filter()
+void Filter::core_init(pw_filter *filter)
 {
-	pw_filter_destroy(filter);
+	this->filter = filter;
+	setup_filter_events();
 }
 
 
@@ -89,9 +91,9 @@ void Filter::setup_filter_events()
 }
 
 
-void Filter::on_process(void *userdata, struct spa_io_position *position)
+void Filter::on_process(void *data, struct spa_io_position *position)
 {
-	FilterEventsUserData *feud = static_cast<FilterEventsUserData *>(feud);
+	FilterEventsUserData *feud = static_cast<FilterEventsUserData *>(data);
 	feud->self->on_process(position->clock.duration);
 }
 

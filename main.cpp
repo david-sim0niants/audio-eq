@@ -12,8 +12,6 @@ int main(int argc, char *argv[])
 {
 	aeq::Core core {argc, argv};
 
-	sleep(1);
-
 	core.lock_loop();
 
 	std::vector<aeq::Node *> nodes;
@@ -38,9 +36,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	std::unique_ptr<aeq::filters::LowPassFilter> low_pass_filter =
-		std::make_unique<aeq::filters::LowPassFilter>(
-				std::move(*core.create_filter("audio-dsp").release()), cutoff_freq, sample_rate, nr_channels);
+	aeq::filters::LowPassFilter low_pass_filter {cutoff_freq, sample_rate, nr_channels};
+	core.init_filter(low_pass_filter, "audio-dsp");
 
 	core.unlock_loop();
 	while (true) {

@@ -14,7 +14,7 @@ Core::Core(int &argc, char **&argv)
 	PW_UniquePtr<pw_thread_loop> loop {
 		pw_thread_loop_new("core-loop", nullptr) };
 	if (loop == nullptr)
-		throw CoreErr(AudioEqErr("Error: failed to create new thread loop.", errno));
+		throw CoreErr(AudioEqErr("Error: failed to create a new thread loop.", errno));
 
 	PW_UniquePtr<pw_context> context {
 		pw_context_new(pw_thread_loop_get_loop(loop.get()), nullptr, 0) };
@@ -26,6 +26,10 @@ Core::Core(int &argc, char **&argv)
 	PW_UniquePtr<pw_registry> registry {
 		pw_core_get_registry(core.get(), PW_VERSION_REGISTRY, 0) };
 
+	PW_UniquePtr<pw_main_loop> main_loop { pw_main_loop_new(nullptr) };
+	if (main_loop == nullptr)
+		throw CoreErr(AudioEqErr("Error: failed to create a new main loop.", errno));
+
 	int ret = pw_thread_loop_start(loop.get());
 	if (ret)
 		throw CoreErr(AudioEqErr("Error: failed to start a loop.", errno));
@@ -35,13 +39,22 @@ Core::Core(int &argc, char **&argv)
 	this->context = std::move(context);
 	this->core = std::move(core);
 	this->registry = std::move(registry);
+	this->main_loop = std::move(main_loop);
 
 	lock_loop();
 	setup_registry_events();
 	unlock_loop();
 	deferred_deinit.cancel();
+
+	do_roundtrip();
 }
 
+
+template<>
+void Core::T_deleter<pw_main_loop>::operator()(pw_main_loop *main_loop)
+{
+	pw_main_loop_destroy(main_loop);
+}
 
 template<>
 void Core::T_deleter<pw_registry>::operator()(pw_registry *registry)
@@ -123,15 +136,19 @@ void Core::unlink_ports(uint32_t link_id)
 }
 
 
-std::unique_ptr<Filter> Core::create_filter(const char *name)
+void Core::init_filter(Filter& filter, const char *name)
 {
 	pw_properties *props = pw_properties_new(
 		PW_KEY_MEDIA_TYPE, "Audio",
 		PW_KEY_MEDIA_CATEGORY, "Filter",
 		PW_KEY_MEDIA_ROLE, "DSP",
 		NULL);
-	pw_filter *filter = pw_filter_new(core.get(), name, props);
-	return std::unique_ptr<Filter>(new Filter(filter));
+	pw_filter *pipewire_filter = pw_filter_new(core.get(), name, props);
+	if (pipewire_filter == nullptr) {
+		pw_properties_free(props);
+		throw CoreErr(AudioEqErr("Failed to create a pipewire filter.", errno));
+	}
+	filter.core_init(pipewire_filter);
 }
 
 
@@ -401,6 +418,39 @@ bool Core::try_unwrap_link(uint32_t id)
 	// remove it from registry_objects
 	registry_objects.links.erase(link_it);
 	return true;
+}
+
+
+void Core::do_roundtrip()
+{
+	struct RoundtripData {
+		int pending;
+		pw_main_loop *loop;
+	};
+
+	static const auto on_core_done = [](void *data, uint32_t id, int seq)
+	{
+		RoundtripData *rdata = static_cast<RoundtripData *>(data);
+
+		if (id == PW_ID_CORE && seq == rdata->pending)
+			pw_main_loop_quit(rdata->loop);
+	};
+
+	static const pw_core_events core_events = {
+		.version = PW_VERSION_CORE_EVENTS,
+		.done = +on_core_done,
+	};
+
+	RoundtripData rdata = {.loop = main_loop.get()};
+	spa_hook core_listener;
+
+	pw_core_add_listener(core.get(), &core_listener, &core_events, &rdata);
+
+	rdata.pending = pw_core_sync(core.get(), PW_ID_CORE, 0);
+
+	pw_main_loop_run(main_loop.get());
+
+	spa_hook_remove(&core_listener);
 }
 
 

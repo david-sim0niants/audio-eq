@@ -66,7 +66,7 @@ public:
 	/* Unlink two ports given the link id. */
 	void unlink_ports(uint32_t link_id);
 
-	std::unique_ptr<Filter> create_filter(const char *name);
+	void init_filter(Filter& filter, const char *name);
 private:
 	void setup_registry_events() noexcept;
 
@@ -78,11 +78,14 @@ private:
 	bool try_unwrap_port(uint32_t id);
 	bool try_unwrap_link(uint32_t id);
 
+	void do_roundtrip();
+
 	utils::Defer<void (*)()> deferred_deinit;
 	PW_UniquePtr<pw_thread_loop> loop;
 	PW_UniquePtr<pw_context> context;
 	PW_UniquePtr<pw_core> core;
 	PW_UniquePtr<pw_registry> registry;
+	PW_UniquePtr<pw_main_loop> main_loop;
 
 	RegistryEventUserData reud;
 	spa_hook registry_listener;

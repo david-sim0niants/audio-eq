@@ -5,11 +5,16 @@
 
 namespace aeq::filters {
 
-LowPassFilter::LowPassFilter(Filter&& base, float cutoff_freq, int sample_rate, int nr_channels)
-	: Filter(std::move(base)),
-	cuttoff_freq(cutoff_freq), sample_rate(sample_rate),
+LowPassFilter::LowPassFilter(float cutoff_freq, int sample_rate, int nr_channels)
+	: nr_channels(nr_channels), cuttoff_freq(cutoff_freq), sample_rate(sample_rate),
 	alpha(calc_alpha(cutoff_freq, sample_rate)), prev_output(0)
 {
+}
+
+
+void LowPassFilter::core_init(pw_filter *filter)
+{
+	Filter::core_init(filter);
 	if (nr_channels <= 0) {
 		return;
 	} else if (nr_channels == 1) {
