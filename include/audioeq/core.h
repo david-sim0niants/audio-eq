@@ -55,6 +55,8 @@ public:
 	void lock_loop() const;
 	/* Unlock the thread loop. */
 	void unlock_loop() const;
+	/* Wait the thread loop. */
+	void wait_loop() const;
 
 	/* List all currently available nodes. */
 	void list_nodes(std::vector<Node *>& nodes) const;

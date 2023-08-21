@@ -36,7 +36,9 @@ Core::Core(int &argc, char **&argv)
 	this->core = std::move(core);
 	this->registry = std::move(registry);
 
+	lock_loop();
 	setup_registry_events();
+	unlock_loop();
 	deferred_deinit.cancel();
 }
 
@@ -77,6 +79,12 @@ void Core::lock_loop() const
 void Core::unlock_loop() const
 {
 	pw_thread_loop_unlock(loop.get());
+}
+
+
+void Core::wait_loop() const
+{
+	pw_thread_loop_wait(loop.get());
 }
 
 
@@ -123,7 +131,6 @@ std::unique_ptr<Filter> Core::create_filter(const char *name)
 		PW_KEY_MEDIA_ROLE, "DSP",
 		NULL);
 	pw_filter *filter = pw_filter_new(core.get(), name, props);
-	pw_properties_free(props);
 	return std::unique_ptr<Filter>(new Filter(filter));
 }
 
