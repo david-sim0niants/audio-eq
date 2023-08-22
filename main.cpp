@@ -60,6 +60,8 @@ void BoringCLI::run()
 		std::cout << "(aeq) ";
 		if (!std::getline(std::cin, command_line))
 			break;
+		if (std::all_of(command_line.begin(), command_line.end(), isspace))
+			continue;
 
 		std::stringstream command_line_ss {command_line};
 
