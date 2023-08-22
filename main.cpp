@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 
 	aeq::filters::LowPassFilter low_pass_filter {cutoff_freq, sample_rate, nr_channels};
 	core.init_filter(low_pass_filter, "audio-dsp");
+	low_pass_filter.start();
 
 	core.unlock_loop();
 	while (true) {

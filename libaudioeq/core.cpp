@@ -14,25 +14,25 @@ Core::Core(int &argc, char **&argv)
 	PW_UniquePtr<pw_thread_loop> loop {
 		pw_thread_loop_new("core-loop", nullptr) };
 	if (loop == nullptr)
-		throw CoreErr(AudioEqErr("Error: failed to create a new thread loop.", errno));
+		throw CoreErr({"Error: failed to create a new thread loop.", errno});
 
 	PW_UniquePtr<pw_context> context {
 		pw_context_new(pw_thread_loop_get_loop(loop.get()), nullptr, 0) };
 
 	PW_UniquePtr<pw_core> core { pw_context_connect(context.get(), nullptr, 0) };
 	if (core == nullptr)
-		throw CoreErr(AudioEqErr("Error: failed connecting to pipewire core", errno));
+		throw CoreErr({"Error: failed connecting to pipewire core", errno});
 
 	PW_UniquePtr<pw_registry> registry {
 		pw_core_get_registry(core.get(), PW_VERSION_REGISTRY, 0) };
 
 	PW_UniquePtr<pw_main_loop> main_loop { pw_main_loop_new(nullptr) };
 	if (main_loop == nullptr)
-		throw CoreErr(AudioEqErr("Error: failed to create a new main loop.", errno));
+		throw CoreErr({"Error: failed to create a new main loop.", errno});
 
 	int ret = pw_thread_loop_start(loop.get());
 	if (ret)
-		throw CoreErr(AudioEqErr("Error: failed to start a loop.", errno));
+		throw CoreErr({"Error: failed to start a loop.", errno});
 
 	this->deferred_deinit = std::move(deferred_deinit);
 	this->loop = std::move(loop);
@@ -113,7 +113,7 @@ void Core::list_nodes(std::vector<Node *>& nodes) const
 uint32_t Core::link_ports(Port& o_port, Port& i_port)
 {
 	if (o_port.get_direction() != PortDirection::Output || i_port.get_direction() != PortDirection::Input)
-		throw CoreErr(AudioEqErr("Error: wrong port given."));
+		throw CoreErr({"Error: wrong port given."});
 
 	pw_properties *props = pw_properties_new(nullptr, nullptr);
 	pw_properties_setf(props, PW_KEY_LINK_OUTPUT_PORT, "%d", o_port.get_id());
@@ -146,7 +146,7 @@ void Core::init_filter(Filter& filter, const char *name)
 	pw_filter *pipewire_filter = pw_filter_new(core.get(), name, props);
 	if (pipewire_filter == nullptr) {
 		pw_properties_free(props);
-		throw CoreErr(AudioEqErr("Failed to create a pipewire filter.", errno));
+		throw CoreErr({"Failed to create a pipewire filter.", errno});
 	}
 	filter.core_init(pipewire_filter);
 }

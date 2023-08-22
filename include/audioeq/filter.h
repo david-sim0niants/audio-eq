@@ -1,6 +1,7 @@
 #pragma once
 
 #include "objects.h"
+#include "err.h"
 
 #include <pipewire/pipewire.h>
 
@@ -22,6 +23,9 @@ public:
 	Filter& operator=(Filter &&) = delete;
 	Filter(const Filter&) = delete;
 	Filter& operator=(const Filter&) = delete;
+
+	void start();
+	void stop();
 protected:
 	virtual void core_init(pw_filter *filter);
 
@@ -46,6 +50,11 @@ private:
 	static void on_process(void *data, struct spa_io_position *position);
 
 	static pw_filter_events filter_events;
+};
+
+
+struct FilterErr : AudioEqErr {
+	FilterErr(AudioEqErr&& base) : AudioEqErr(std::move(base)) {}
 };
 
 }

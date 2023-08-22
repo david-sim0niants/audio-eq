@@ -1,12 +1,42 @@
 #include <audioeq/filter.h>
 
+#include <spa/pod/builder.h>
+#include <spa/param/latency-utils.h>
+
 
 namespace aeq {
 
 Filter::~Filter()
 {
-	if (filter)
+	if (filter) {
+		stop();
 		pw_filter_destroy(filter);
+	}
+}
+
+
+void Filter::start()
+{
+	if (filter == nullptr)
+		throw FilterErr({"Filter is not initialized yet. Can't start it."});
+
+	thread_local uint8_t buffer[1024];
+	struct spa_pod_builder pod_builder = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
+
+	const spa_pod *params[1];
+	spa_process_latency_info latency_info = SPA_PROCESS_LATENCY_INFO_INIT(
+			.ns = 10 * SPA_NSEC_PER_MSEC
+			);
+	params[0] = spa_process_latency_build(&pod_builder,
+			SPA_PARAM_ProcessLatency, &latency_info);
+	if (pw_filter_connect(filter, PW_FILTER_FLAG_RT_PROCESS, params, 1) < 0)
+		throw FilterErr({"Failed to connect filter.", errno});
+}
+
+
+void Filter::stop()
+{
+	pw_filter_disconnect(filter);
 }
 
 

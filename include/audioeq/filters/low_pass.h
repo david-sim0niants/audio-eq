@@ -1,7 +1,6 @@
 #pragma once
 
 #include <audioeq/filter.h>
-#include <audioeq/err.h>
 
 namespace aeq::filters {
 
@@ -20,13 +19,12 @@ private:
 	int sample_rate;
 
 	float alpha;
-	float prev_output;
 
 	static float calc_alpha(float cuttoff_freq, int sample_rate);
 };
 
-struct LowPassFilterErr : AudioEqErr {
-	LowPassFilterErr(AudioEqErr&& base) : AudioEqErr(std::move(base)) {}
+struct LowPassFilterErr : FilterErr {
+	LowPassFilterErr(FilterErr&& base) : FilterErr(std::move(base)) {}
 };
 
 }
