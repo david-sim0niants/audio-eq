@@ -67,6 +67,9 @@ public:
 	void unlink_ports(uint32_t link_id);
 
 	void init_filter(Filter& filter, const char *name);
+
+	Node *find_node(uint32_t id) const;
+	Port *find_port(uint32_t id) const;
 private:
 	void setup_registry_events() noexcept;
 

@@ -2,6 +2,8 @@
 
 #include <audioeq/filter.h>
 
+#include <atomic>
+
 namespace aeq::filters {
 
 class LowPassFilter : public Filter {
@@ -18,7 +20,7 @@ private:
 	float cuttoff_freq;
 	int sample_rate;
 
-	float alpha;
+	std::atomic<float> alpha;
 
 	static float calc_alpha(float cuttoff_freq, int sample_rate);
 };

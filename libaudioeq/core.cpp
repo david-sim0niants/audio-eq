@@ -124,6 +124,10 @@ uint32_t Core::link_ports(Port& o_port, Port& i_port)
 				PW_TYPE_INTERFACE_Link,
 				PW_VERSION_LINK,
 				&props->dict, 0));
+	if (link == nullptr) {
+		pw_properties_free(props);
+		return 0;
+	}
 	pw_properties_free(props);
 	return pw_proxy_get_id(link);
 }
@@ -132,12 +136,16 @@ uint32_t Core::link_ports(Port& o_port, Port& i_port)
 void Core::unlink_ports(uint32_t link_id)
 {
 	pw_proxy *link = static_cast<pw_proxy *>(pw_core_find_proxy(core.get(), link_id));
-	pw_proxy_destroy(link);
+	if (link)
+		pw_proxy_destroy(link);
 }
 
 
 void Core::init_filter(Filter& filter, const char *name)
 {
+	lock_loop();
+	utils::Defer defer {[this](){unlock_loop();}};
+
 	pw_properties *props = pw_properties_new(
 		PW_KEY_MEDIA_TYPE, "Audio",
 		PW_KEY_MEDIA_CATEGORY, "Filter",
@@ -149,6 +157,24 @@ void Core::init_filter(Filter& filter, const char *name)
 		throw CoreErr({"Failed to create a pipewire filter.", errno});
 	}
 	filter.core_init(pipewire_filter);
+}
+
+
+Node *Core::find_node(uint32_t id) const
+{
+	auto found_it = registry_objects.nodes.find(id);
+	if (found_it == registry_objects.nodes.end())
+		return nullptr;
+	return found_it->second.get();
+}
+
+
+Port *Core::find_port(uint32_t id) const
+{
+	auto found_it = registry_objects.ports.find(id);
+	if (found_it == registry_objects.ports.end())
+		return nullptr;
+	return found_it->second.get();
 }
 
 
