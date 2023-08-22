@@ -1,5 +1,5 @@
-#include <audioeq/audioeq.h>
-#include <audioeq/filters/low_pass.h>
+#include "audioeq/audioeq.h"
+#include "audioeq/filters/low_pass.h"
 
 #include <iostream>
 #include <sstream>

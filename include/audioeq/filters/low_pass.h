@@ -1,6 +1,6 @@
 #pragma once
 
-#include <audioeq/filter.h>
+#include "audioeq/filter.h"
 
 #include <atomic>
 

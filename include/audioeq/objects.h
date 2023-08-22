@@ -215,7 +215,10 @@ inline void Port::link_to_id(uint32_t other_id)
 
 inline void Port::unlink_from_id(uint32_t other_id)
 {
-	std::erase_if(linked_ports, [other_id](auto& port) {return port.id == other_id;});
+	linked_ports.erase(std::remove_if(linked_ports.begin(),
+				linked_ports.end(),
+				[other_id](auto& port) {return port.id == other_id;}),
+			linked_ports.end());
 }
 
 inline void Port::unlink_from(Port& other)

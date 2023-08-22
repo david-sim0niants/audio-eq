@@ -66,9 +66,12 @@ public:
 	/* Unlink two ports given the link id. */
 	void unlink_ports(uint32_t link_id);
 
+	/* Initialize Filter with an actual backend. */
 	void init_filter(Filter& filter, const char *name);
 
+	/* Find node with given id. */
 	Node *find_node(uint32_t id) const;
+	/* Find port with given id. */
 	Port *find_port(uint32_t id) const;
 private:
 	void setup_registry_events() noexcept;
