@@ -194,7 +194,7 @@ void Core::on_global(void *data, uint32_t id,
 		const spa_dict *props)
 {
 	RegistryEventUserData& reud = *static_cast<RegistryEventUserData *>(data);
-	std::string str_type {type};
+	std::string_view str_type {type};
 
 	if (str_type == PW_TYPE_INTERFACE_Node)
 		reud.self->wrap_node(id, props);

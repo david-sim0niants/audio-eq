@@ -7,6 +7,7 @@
 
 namespace aeq {
 
+/* Base wrapper class for pipewire objects. */
 class Object {
 	friend class Core;
 public:
@@ -25,6 +26,8 @@ protected:
 };
 
 
+/* A struct that can store both the ID and the pointer of an object or
+ * store only its ID if the pointer is not present yet. */
 template<typename O, typename ID=uint32_t>
 struct ID_Ptr {
 	ID id = 0;
@@ -39,13 +42,18 @@ struct ID_Ptr {
 
 class Port;
 
+/* Node wrapper. Stores its input and output ports. */
 class Node : public Object {
 	friend class Core;
 public:
+	/* Get input port at given index. */
 	Port& get_i_port(int index) const;
+	/* Get number of input ports. */
 	size_t get_nr_i_ports() const;
 
+	/* Get output port at given index. */
 	Port& get_o_port(int index) const;
+	/* Get number of output ports. */
 	size_t get_nr_o_ports() const;
 
 	const std::string& get_name() const;
@@ -67,18 +75,24 @@ private:
 
 enum class PortDirection { Input, Output };
 
+/* Port wrapper. Stores its direction, owner and the linked ports. */
 class Port : public Object {
 	friend class Core;
 	using LinkedPortIt = std::vector<ID_Ptr<Port>>::iterator;
 public:
+	/* Get ID of a linked port at given index. */
 	uint32_t get_linked_port_id(size_t index) const;
+	/* Get pointer to a linked port at given index. */
 	Port *get_linked_port(size_t index) const;
+	/* Get number of linked ports. */
 	size_t get_nr_linked_ports() const;
 
 	const std::string& get_name() const;
 	PortDirection get_direction() const;
 
+	/* Get ID of its Node owner. */
 	uint32_t get_owner_id() const;
+	/* Get pointer to its Node owner. */
 	Node *get_owner() const;
 private:
 	Port(Object&& object, std::string_view name, PortDirection direction)
@@ -140,24 +154,6 @@ inline const std::string& Node::get_descripiton() const
 	return description;
 }
 
-inline void Node::add_port(Port& port)
-{
-	if (port.get_direction() == PortDirection::Input)
-		i_ports.push_back(&port);
-	else
-		o_ports.push_back(&port);
-}
-
-inline void Node::rem_port(Port& port)
-{
-	auto& ports = port.get_direction() == PortDirection::Input ? i_ports : o_ports;
-	auto found_port_it = std::find_if(ports.begin(), ports.end(),
-			[&port](Port *curr_port) { return curr_port->get_id() == port.get_id(); });
-	if (found_port_it == ports.end())
-		return;
-	ports.erase(found_port_it);
-}
-
 
 inline uint32_t Port::get_linked_port_id(size_t index) const
 {
@@ -192,45 +188,6 @@ inline uint32_t Port::get_owner_id() const
 inline Node *Port::get_owner() const
 {
 	return owner.ptr;
-}
-
-inline void Port::link_to(Port& other)
-{
-	auto found_port_it = find_linked_port(other.id);
-	if (found_port_it == linked_ports.end())
-		linked_ports.emplace_back(other.id, &other);
-	else
-		*found_port_it = {other.id, &other};
-	other.linked_ports.emplace_back(id, this);
-}
-
-inline void Port::link_to_id(uint32_t other_id)
-{
-	auto found_port_it = find_linked_port(other_id);
-	if (found_port_it == linked_ports.end())
-		linked_ports.emplace_back(other_id);
-	else
-		*found_port_it = ID_Ptr<Port>(other_id);
-}
-
-inline void Port::unlink_from_id(uint32_t other_id)
-{
-	linked_ports.erase(std::remove_if(linked_ports.begin(),
-				linked_ports.end(),
-				[other_id](auto& port) {return port.id == other_id;}),
-			linked_ports.end());
-}
-
-inline void Port::unlink_from(Port& other)
-{
-	unlink_from_id(other.id);
-}
-
-inline Port::LinkedPortIt Port::find_linked_port(uint32_t id)
-{
-	return std::find_if(linked_ports.begin(), linked_ports.end(),
-			[id](const ID_Ptr<Port>& port){ return port.id == id; });
-
 }
 
 inline void Port::set_owner_id(uint32_t owner_id)

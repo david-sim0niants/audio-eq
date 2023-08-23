@@ -103,6 +103,7 @@ void BoringCLI::do_link(std::stringstream& cmdline_ss, CommandContext& context)
 
 	if (port_a->get_direction() == port_b->get_direction()) {
 		std::cerr << "Error: both ports have the same direction." << std::endl;
+		return;
 	}
 
 	aeq::Port *i_port, *o_port;
