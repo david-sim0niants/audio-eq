@@ -33,7 +33,7 @@ protected:
 	/* Initialize core with pw_filter. */
 	virtual void core_init(pw_filter *filter);
 
-	virtual void on_process(size_t nr_samples);
+	virtual void on_process(size_t nr_samples) = 0;
 
 	void add_audio_port(PortDirection direction, const char *name);
 	void rem_audio_port(AudioPort *port);

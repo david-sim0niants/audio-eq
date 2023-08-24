@@ -162,10 +162,6 @@ void BoringCLI::do_list(std::stringstream& cmdline_ss, CommandContext& context)
 			std::cout << '\t' << port.get_id() << ": " << port.get_name() << std::endl;
 		}
 	}
-
-	aeq::filters::LowPassFilter low_pass_filter {cutoff_freq, sample_rate, nr_channels};
-	core.init_filter(low_pass_filter, "audio-dsp");
-	low_pass_filter.start();
 }
 
 

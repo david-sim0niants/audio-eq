@@ -47,11 +47,6 @@ void Filter::core_init(pw_filter *filter)
 }
 
 
-void Filter::on_process(size_t nr_samples)
-{
-}
-
-
 void Filter::add_audio_port(PortDirection direction, const char *name)
 {
 	pw_properties *props = pw_properties_new(
@@ -72,8 +67,7 @@ void Filter::add_audio_port(PortDirection direction, const char *name)
 				pw_filter_add_port(filter,
 				spa_dir,
 				PW_FILTER_PORT_FLAG_MAP_BUFFERS,
-				sizeof(void *),
-				props, nullptr, 0));
+				0, props, nullptr, 0));
 	ports->push_back(port);
 }
 

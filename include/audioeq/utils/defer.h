@@ -13,7 +13,7 @@ class Defer
 	std::optional<F> f;
 public:
 	Defer() noexcept = default;
-	Defer(F &&f) noexcept : f(std::move(f)) {}
+	Defer(F&& f) noexcept : f(std::move(f)) {}
 
 	inline void cancel() noexcept { f = std::nullopt; }
 

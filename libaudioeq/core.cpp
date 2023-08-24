@@ -80,7 +80,10 @@ void Core::T_deleter<pw_thread_loop>::operator()(pw_thread_loop *loop)
 	pw_thread_loop_destroy(loop);
 }
 
-Core::~Core() = default;
+Core::~Core()
+{
+	pw_thread_loop_stop(loop.get());
+}
 
 
 void Core::lock_loop() const
