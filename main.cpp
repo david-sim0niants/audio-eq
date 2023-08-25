@@ -43,8 +43,6 @@ int main(int argc, char *argv[])
 	aeq::filters::LowPassFilter low_pass_filter {cutoff_freq, sample_rate, nr_channels};
 	core.init_filter(low_pass_filter, "AudioEQ: low pass filter");
 
-	low_pass_filter.start();
-
 	BoringCLI boring_cli {{.core = core, .low_pass_filter = low_pass_filter}};
 	boring_cli.run();
 

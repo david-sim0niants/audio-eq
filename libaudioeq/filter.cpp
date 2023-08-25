@@ -9,17 +9,24 @@ namespace aeq {
 Filter::~Filter()
 {
 	if (filter) {
-		stop();
+		disconnect();
 		pw_filter_destroy(filter);
 	}
 }
 
 
-void Filter::start()
+void Filter::core_init(pw_filter *filter)
 {
 	if (filter == nullptr)
-		throw FilterErr({"Filter is not initialized yet. Can't start it."});
+		throw FilterErr({"Invalid initialization of the filter."});
+	this->filter = filter;
+	setup_filter_events();
+	connect();
+}
 
+
+void Filter::connect()
+{
 	thread_local uint8_t buffer[1024];
 	struct spa_pod_builder pod_builder = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
 
@@ -34,16 +41,9 @@ void Filter::start()
 }
 
 
-void Filter::stop()
+void Filter::disconnect()
 {
 	pw_filter_disconnect(filter);
-}
-
-
-void Filter::core_init(pw_filter *filter)
-{
-	this->filter = filter;
-	setup_filter_events();
 }
 
 
@@ -67,7 +67,8 @@ void Filter::add_audio_port(PortDirection direction, const char *name)
 				pw_filter_add_port(filter,
 				spa_dir,
 				PW_FILTER_PORT_FLAG_MAP_BUFFERS,
-				0, props, nullptr, 0));
+				sizeof(AudioPort),
+				props, nullptr, 0));
 	ports->push_back(port);
 }
 

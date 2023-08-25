@@ -5,13 +5,11 @@
 
 namespace aeq::filters {
 
-LowPassFilter::LowPassFilter(float cutoff_freq, int sample_rate, int nr_channels)
+LowPassFilter::LowPassFilter(float cutoff_freq, int sample_rate, unsigned int nr_channels)
 	: nr_channels(nr_channels), cuttoff_freq(cutoff_freq), sample_rate(sample_rate),
 	alpha(calc_alpha(cutoff_freq, sample_rate))
 {
-	if (nr_channels <= 0)
-		nr_channels = 0;
-	else if (nr_channels > 2)
+	if (nr_channels > 2)
 		nr_channels = 2;
 }
 
@@ -19,7 +17,7 @@ LowPassFilter::LowPassFilter(float cutoff_freq, int sample_rate, int nr_channels
 void LowPassFilter::core_init(pw_filter *filter)
 {
 	Filter::core_init(filter);
-	if (nr_channels <= 0) {
+	if (nr_channels == 0) {
 		return;
 	} else if (nr_channels == 1) {
 		add_audio_port(PortDirection::Input, "lp-in");
@@ -59,7 +57,7 @@ void LowPassFilter::on_process(size_t nr_samples)
 void LowPassFilter::single_channel_process(float *in_buf, float *out_buf, size_t nr_samples)
 {
 	for (size_t i = 0; i < nr_samples; ++i) {
-		out_buf[i] = alpha * in_buf[i] + (1 - alpha) * out_buf[i];
+		out_buf[i] = alpha * in_buf[i] + (1.0F - alpha) * out_buf[i];
 	}
 }
 

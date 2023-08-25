@@ -11,9 +11,9 @@ namespace aeq {
  * The base class of all kinds of audio filters. */
 class Filter {
 	friend class Core;
-	/* Opaque audio port type. Pointer to this type is used as a
-	 * reference to an internal port info. */
-	using AudioPort = void;
+	/* Audio port type with no actual data (user data from pipewire perspective) required so far.
+	 * Pointer to this type is used as a reference to a pw_filter port obtained by pw_filter_add_port. */
+	struct AudioPort {};
 
 	struct FilterEventsUserData {
 		Filter *self;
@@ -26,14 +26,14 @@ public:
 	Filter& operator=(Filter &&) = delete;
 	Filter(const Filter&) = delete;
 	Filter& operator=(const Filter&) = delete;
-
-	void start();
-	void stop();
 protected:
 	/* Initialize core with pw_filter. */
 	virtual void core_init(pw_filter *filter);
 
 	virtual void on_process(size_t nr_samples) = 0;
+
+	void connect();
+	void disconnect();
 
 	void add_audio_port(PortDirection direction, const char *name);
 	void rem_audio_port(AudioPort *port);

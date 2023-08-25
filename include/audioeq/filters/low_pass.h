@@ -8,7 +8,7 @@ namespace aeq::filters {
 
 class LowPassFilter : public Filter {
 public:
-	LowPassFilter(float cutoff_freq, int sample_rate, int nr_channels);
+	LowPassFilter(float cutoff_freq, int sample_rate, unsigned int nr_channels);
 
 	void core_init(pw_filter *filter) override;
 	void set_cutoff_freq(float cutoff_freq);
